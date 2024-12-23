@@ -42,7 +42,7 @@ agent = ChemCrow(
     # ollama_base_url="http://localhost:11434",
     # retroplanner_base_url="http://localhost:8001/retroplanner",
     ollama_base_url=ss.get('ollama_base_url', 'http://localhost:11434'),
-    retroplanner_base_url=ss.get('retroplanner_base_url', 'http://localhost:8001/retroplanner'),
+    retroplanner_base_url=ss.get('retroplanner_base_url', 'http://cadd.zju.edu.cn/retroplanner'),
     llm_cache=False,
 ).agent_executor
 
@@ -152,7 +152,7 @@ with st.sidebar:
     )
     st.text_input(
         "Enter ChemEnzyRetroPlanner Base URL",
-        value="http://localhost:8001/retroplanner",
+        value="http://cadd.zju.edu.cn/retroplanner",
         help="URL for the ChemEnzyRetroPlanner service",
         key='retroplanner_base_url',
         on_change=on_retroplanner_base_url_change,
