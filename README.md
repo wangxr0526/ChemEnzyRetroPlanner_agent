@@ -8,9 +8,10 @@ git clone https://github.com/wangxr0526/ChemEnzyRetroPlanner_agent.git
 cd ChemEnzyRetroPlanner_agent
 conda env create -f envs.yml
 conda activate retro_planner_agent_env
+pip install -r requirements.txt
 pip install chemprice
 pip install -e ./agent
-cd ../streamlit_app
+cd streamlit_app
 streamlit run app.py
 ```
 
