@@ -1,0 +1,12 @@
+[server]
+headless = true
+port = 8501
+enableCORS = false
+[logger]
+level = "warning"
+[theme]
+base="dark"
+backgroundColor="#3f3f3f"
+secondaryBackgroundColor="#373737"
+
+

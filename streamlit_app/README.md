@@ -1,0 +1,1 @@
+Adapted from [ChemCrow streamlit app](https://huggingface.co/spaces/doncamilom/ChemCrow)
