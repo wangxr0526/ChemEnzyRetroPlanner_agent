@@ -1,7 +1,7 @@
 # ChemEnzyRetroPlanner Agent
 This is an Agent paired with the ChemEnzyRetroPlanner API, adapted for Llama 3.1 based on ChemCrow, with partial localization of certain synthesis planning tools.  
 ## Introduction
-![ChemEnzyRetroPlanner](./streamlit_app/assets/introduction.png)
+![ChemEnzyRetroPlanner](./streamlit_app/assets/agent_intro_b.png)
 ## Installation Guide
 ```
 git clone https://github.com/wangxr0526/ChemEnzyRetroPlanner_agent.git
