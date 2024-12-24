@@ -1,6 +1,7 @@
 """Wrapper for RXN4Chem functionalities."""
 
 import json
+import time
 from langchain.chat_models.base import BaseChatModel
 from langchain.chat_models import ChatOpenAI, ChatOllama
 from langchain.schema import HumanMessage
@@ -37,6 +38,8 @@ class RetroPlanner(BaseTool):
     )
 
     base_url: str = None
+    query_url: str = None
+    results_url: str = None
     headers: dict = dict()
     llm: BaseChatModel = None
 
@@ -46,6 +49,8 @@ class RetroPlanner(BaseTool):
             self.base_url = base_url
         else:
             self.base_url = "http://localhost:8001/retroplanner/api/retroplanner"
+        self.query_url = f"{self.base_url.split('/api')[0]}/status"
+        self.results_url = f"{self.base_url}_results"
         self.headers = {"Content-Type": "application/json"}
         self.llm = llm
 
@@ -140,14 +145,42 @@ class RetroPlanner(BaseTool):
             return "Smiles is Not Valid."
 
         data = {"smiles": smiles, "savedOptions": {}}
-        response = requests.post(
+        submit_response = requests.post(
             self.base_url, headers=self.headers, data=json.dumps(data)
         )
 
         # curl -X POST http://localhost:8001/retroplanner/api/retroplanner -H "Content-Type: application/json" -d '{"smiles": "CCCCOCCCCC", "savedOptions":{}}'
 
-        if response.status_code == 200:
-            data_dict = response.json()
+        if submit_response.status_code == 200:
+            results_id = submit_response.json()['results_id']
+            start_time = time.time()
+   
+            while True:
+                if time.time() - start_time >= 3600:
+                    print("Query timed out after 1 hour.")
+                    break
+                try:
+                    query_response = requests.get(f"{self.query_url}/{results_id}")
+                    if query_response.status_code == 200:
+                        query_data = query_response.json()
+                        if query_data.get("status") == "SUCCESS":
+                            
+                            results_response = requests.post(
+                                    self.results_url, 
+                                    headers=self.headers, 
+                                    data=json.dumps(
+                                                {
+                                                'results_id': results_id
+                                                }
+                                        )
+                                )
+                            data_dict = results_response.json()
+                            break
+                except requests.exceptions.RequestException as e:
+                    print(f"An error occurred: {e}")
+                    raise ValueError
+                time.sleep(30)
+                    
 
             if "routes" in data_dict:
                 reaction_trees = data_dict["routes"]
@@ -163,8 +196,8 @@ class RetroPlanner(BaseTool):
                 )
             else:
                 raise KeyError
-        elif response.status_code == 400:
-            data_dict = response.json()
+        elif submit_response.status_code == 400:
+            data_dict = submit_response.json()
             if "error" in data_dict:
                 return data_dict["error"]
             else:
