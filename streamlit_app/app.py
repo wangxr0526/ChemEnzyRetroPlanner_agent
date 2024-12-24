@@ -100,6 +100,7 @@ def run_prompt(prompt):
             collapse_completed_thoughts=False,
             output_placeholder=ss,
             use_rdkit=True,
+            retroplanner_base_url=ss.get('retroplanner_base_url', 'http://cadd.zju.edu.cn/retroplanner')
         )
         try:
             # with wandb_tracing_enabled():

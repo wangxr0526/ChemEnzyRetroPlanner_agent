@@ -33,6 +33,7 @@ class LLMThoughtChem(LLMThought):
         expanded: bool,
         collapse_on_complete: bool,
         use_rdkit: bool,
+        retroplanner_base_url:str = 'http://cadd.zju.edu.cn/retroplanner'
     ):
         super().__init__(
             parent_container,
@@ -41,6 +42,7 @@ class LLMThoughtChem(LLMThought):
             collapse_on_complete,
         )
         self.use_rdkit = use_rdkit
+        self.retroplanner_base_url = retroplanner_base_url
 
     def on_tool_end(
         self,
@@ -93,7 +95,7 @@ class LLMThoughtChem(LLMThought):
                 self._container.markdown(
                     f"""
                     <div style="display: flex; border-radius: 25px; overflow: hidden;">
-                        <iframe src="http://localhost:8001/api/enzyme_show/{results_id}&&&&{uniprot_id}" height="350" width="420" style="border:none; border-radius: 25px;"></iframe>
+                        <iframe src="{self.retroplanner_base_url}/api/enzyme_show/{results_id}&&&&{uniprot_id}" height="350" width="420" style="border:none; border-radius: 25px;"></iframe>
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -169,7 +171,7 @@ class LLMThoughtChem(LLMThought):
                 self._container.markdown(output.split('Results ID:')[0], unsafe_allow_html=True)
                 results_id = match.group(1)
                 button_style = f"""
-                <a href="http://localhost:8001/results/{results_id}&resultsLimit-20" target="_blank">
+                <a href="{self.retroplanner_base_url}/results/{results_id}&resultsLimit-20" target="_blank">
                     <button style="color: white; background-color: #3c3c3c; border: none; border-radius: 20px; padding: 8px 16px; box-shadow: 0px 0px 30px rgba(0, 0, 0, 0.15); margin: 10px auto; font-size:16px">
                         Show All Routes
                     </button>
@@ -284,6 +286,7 @@ class StreamlitCallbackHandlerChem(StreamlitCallbackHandler):
         thought_labeler: Optional[LLMThoughtLabeler] = None,
         output_placeholder: dict = {},
         use_rdkit: bool = False,
+        retroplanner_base_url:str = 'http://cadd.zju.edu.cn/retroplanner'
     ):
         super(StreamlitCallbackHandlerChem, self).__init__(
             parent_container,
@@ -296,6 +299,7 @@ class StreamlitCallbackHandlerChem(StreamlitCallbackHandler):
         self._output_placeholder = output_placeholder
         self.last_input = ""
         self.use_rdkit = use_rdkit
+        self.retroplanner_base_url = retroplanner_base_url
 
     def on_llm_start(
         self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
@@ -307,6 +311,7 @@ class StreamlitCallbackHandlerChem(StreamlitCallbackHandler):
                 collapse_on_complete=self._collapse_completed_thoughts,
                 labeler=self._thought_labeler,
                 use_rdkit=self.use_rdkit,
+                retroplanner_base_url=self.retroplanner_base_url,
             )
 
         self._current_thought.on_llm_start(serialized, prompts)
