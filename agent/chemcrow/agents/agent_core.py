@@ -9,6 +9,13 @@ from .prompts import (FINAL_ANSWER_ACTION, FINAL_ANSWER_ACTION_END, FINAL_ANSWER
 
 class RetroPlannerChatZeroShotOutputParser(ChatZeroShotOutputParser):
     def parse(self, text: str) -> Union[AgentAction, AgentFinish]:
+
+        # Remove 'Thought' SUFFIX
+        if text.startswith('Thought:'):
+            text = text[8:]
+        if "Observation" in text:
+            text = text.split('Observation')[0]
+
         if FINAL_ANSWER_ACTION in text:
             return AgentFinish(
                 {"output": text.split(FINAL_ANSWER_ACTION)[-1].strip()}, text
@@ -27,9 +34,7 @@ class RetroPlannerChatZeroShotOutputParser(ChatZeroShotOutputParser):
             return AgentFinish(
                 {"output": text}, text
             )
-        # Remove 'Thought' SUFFIX
-        if text.startswith('Thought:'):
-            text = text[8:]
+
 
         # \s matches against tab/newline/whitespace
         regex = (
