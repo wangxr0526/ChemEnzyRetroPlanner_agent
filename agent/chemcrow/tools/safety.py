@@ -264,11 +264,11 @@ class SimilarControlChemCheck(BaseTool):
 
 class ControlChemCheck(BaseTool):
     name = "ControlChemCheck"
-    description = "Input CAS number, True if molecule is a controlled chemical."
+    description = " Input SMILES string or CAS number, True if molecule is a controlled chemical."
     similar_control_chem_check = SimilarControlChemCheck()
 
     def _run(self, query: str) -> str:
-        """Checks if compound is a controlled chemical. Input CAS number."""
+        """Checks if compound is a controlled chemical. Input SMILES string or CAS number."""
         data_path = pkg_resources.resource_filename("chemcrow", "data/chem_wep_smi.csv")
         cw_df = pd.read_csv(data_path)
         try:
