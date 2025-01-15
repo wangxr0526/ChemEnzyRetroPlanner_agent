@@ -35,6 +35,11 @@ class RetroPlanner(BaseTool):
     description = (
         "Obtain the synthetic route to a chemical compound. "
         "Takes as input the SMILES of the product, returns recipe."
+        "Supports two configurations: \'organic\' uses a model trained"
+        " on organic reaction data, while \'hybrid\' combines models "
+        "trained on organic and enzymatic reaction data."
+        "Input methods: \'TARGET_SMILES??organic\' for \'organic\' "
+        "configuration or \'TARGET_SMILES??hybrid\' for \'hybrid\' configuration"
     )
 
     base_url: str = None
@@ -42,6 +47,22 @@ class RetroPlanner(BaseTool):
     results_url: str = None
     headers: dict = dict()
     llm: BaseChatModel = None
+    options: dict = {
+        "organic":{
+            "iterationNumber": 100,
+            "selectedModels": ["Reaxys"],
+            "selectedStocks": ["eMolecules"],                # default
+            # "selectedStocks": ["BioNav stock (benchmark)"],    # benchmark
+            "selectedConditionPredictor": "Reaction Condition Recommander"       
+        },
+        "hybrid":{
+            "iterationNumber": 100,
+            "selectedModels": ["Reaxys", "BKMS Metabolic"],
+            "selectedStocks": ["eMolecules"],                # default
+            # "selectedStocks": ["BioNav stock (benchmark)"],    # benchmark
+            "selectedConditionPredictor": "Reaction Condition Recommander"       
+        }
+    }
 
     def __init__(self, base_url=None, llm=None):
         super().__init__()
@@ -64,6 +85,7 @@ class RetroPlanner(BaseTool):
                 model="llama3.1:70b",
                 base_url="http://localhost:11434",
                 cache=False,
+                num_ctx=20480,   # Important !
             )
         prompt = (
             "Here is a chemical synthesis described as a json.\nYour task is "
@@ -72,7 +94,11 @@ class RetroPlanner(BaseTool):
             "any general operations mentioned in the JSON file, and pay attention"
             "to whether it is an enzymatic reaction. This is your "
             "only source of information, do not make up anything else. Also, "
-            "add 15mL of DCM as a solvent in the first step. If a reaction step is enzymatic, simply notify the user: 'The tool suggests that this step can be completed with an appropriate enzyme, but the provided steps are still for a standard organic reaction.' If you ever need "
+            "add 15mL of DCM as a solvent in the first step. If a reaction step is enzymatic"
+            ", please provide the EC Numbers of the top-3 enzyme types listed in the JSON and"
+            " simply notify the user as follows: 'The tool suggests that this step can be "
+            "completed with an appropriate enzyme, but the provided steps are still for a "
+            "standard organic reaction.' If you ever need "
             'to refer to the json file, refer to it as "(by) the tool". '
             "However avoid references to it. \nFor this task, give as many "
             f"details as possible.\n {str(json)}"
@@ -128,7 +154,18 @@ class RetroPlanner(BaseTool):
                     "Step reaction type": rxn_classification_df[
                         "Reaction Type"
                     ].tolist()[0],
+                    
                 }
+                if rxn_classification_df["Reaction Type"].tolist()[0] == "Enzymatic Reaction":
+                    enzyme_assign_df = pd.read_json(
+                        StringIO(rxn_attribute["enzyme_assign"])
+                    )
+                
+                    enzyme_assign_info = [f"{rank}: {ec}" for rank, ec in zip(enzyme_assign_df["Ranks"].tolist(), enzyme_assign_df["EC Number"].tolist())]
+                    steps[f"Step_{step_counter}"].update(
+                        {"Enzyme type": enzyme_assign_info}
+                    )
+                        
                 for child in reversed(node["children"]):
                     stack.append((child, node))  # 将分子节点作为父节点传递给其子节点
                 step_counter += 1  # 步骤计数器加1
@@ -140,11 +177,15 @@ class RetroPlanner(BaseTool):
             steps[f"Step_{idx+1}"] = step_info
         return steps
 
-    def _run(self, smiles: str) -> str:
+    def _run(self, smiles_with_conf: str) -> str:
+        if '??' not in smiles_with_conf:
+            smiles = smiles_with_conf
+        else:
+            smiles, conf = smiles_with_conf.split('??')
         if not is_smiles(smiles):
             return "Smiles is Not Valid."
 
-        data = {"smiles": smiles, "savedOptions": {}}
+        data = {"smiles": smiles, "savedOptions": self.options.get(conf, {})}
         submit_response = requests.post(
             self.base_url, headers=self.headers, data=json.dumps(data)
         )
@@ -163,7 +204,7 @@ class RetroPlanner(BaseTool):
                     query_response = requests.get(f"{self.query_url}/{results_id}")
                     if query_response.status_code == 200:
                         query_data = query_response.json()
-                        if query_data.get("status") == "SUCCESS":
+                        if query_data.get("status") in ["SUCCESS", "FAILED"]:
                             
                             results_response = requests.post(
                                     self.results_url, 
@@ -179,10 +220,10 @@ class RetroPlanner(BaseTool):
                 except requests.exceptions.RequestException as e:
                     print(f"An error occurred: {e}")
                     raise ValueError
-                time.sleep(30)
+                time.sleep(10)
                     
 
-            if "routes" in data_dict:
+            if data_dict['status'] == "SUCCESS":
                 reaction_trees = data_dict["routes"]
                 results_id = data_dict["results_id"]
                 num_routes = len(reaction_trees)
@@ -194,6 +235,12 @@ class RetroPlanner(BaseTool):
                     f"and the overview of the optimal synthetic route is as follows:\n{self._summary_gpt(json.dumps(top_routes_summary))}\n"
                     f"Results ID: {results_id}"
                 )
+            elif data_dict['status'] == "FAILED":
+                if conf == 'organic':
+                    return f"Using organic strategy search Failed! You can retry using the hybrid strategy by calling RetroPlannerRetrosynthesis tool with the input {smiles}??hybrid"
+                else:
+                    return "Search Failed! Please increase the number of iterations."
+                
             else:
                 raise KeyError
         elif submit_response.status_code == 400:
