@@ -165,6 +165,7 @@ class LLMThoughtChem(LLMThought):
                     f"#### {rxn_type.capitalize()}\n Confidence: {confidence}"
                 )
         if serialized["name"] == "RetroPlannerRetrosynthesis":
+            output = output.replace("[", "\[").replace("]", "\]")
             pattern = r"Results ID: (\w+-\w+-\w+-\w+-\w+)"
             match = re.search(pattern, output)
             if match:
