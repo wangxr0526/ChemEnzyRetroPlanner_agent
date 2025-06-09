@@ -153,7 +153,7 @@ with st.sidebar:
     )
     st.text_input(
         "Enter ChemEnzyRetroPlanner Base URL",
-        value="http://cadd.zju.edu.cn/retroplanner",
+        value="http://cadd.iddd.group/retroplanner/",
         help="URL for the ChemEnzyRetroPlanner service",
         key='retroplanner_base_url',
         on_change=on_retroplanner_base_url_change,
