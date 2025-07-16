@@ -42,7 +42,7 @@ agent = ChemCrow(
     # ollama_base_url="http://localhost:11434",
     # retroplanner_base_url="http://localhost:8001/retroplanner",
     ollama_base_url=ss.get('ollama_base_url', 'http://localhost:11434'),
-    retroplanner_base_url=ss.get('retroplanner_base_url', 'http://cadd.zju.edu.cn/retroplanner'),
+    retroplanner_base_url=ss.get('retroplanner_base_url', 'http://cadd.iddd.group/retroplanner'),
     llm_cache=False,
 ).agent_executor
 
@@ -100,7 +100,7 @@ def run_prompt(prompt):
             collapse_completed_thoughts=False,
             output_placeholder=ss,
             use_rdkit=True,
-            retroplanner_base_url=ss.get('retroplanner_base_url', 'http://cadd.zju.edu.cn/retroplanner')
+            retroplanner_base_url=ss.get('retroplanner_base_url', 'http://cadd.iddd.group/retroplanner')
         )
         try:
             # with wandb_tracing_enabled():
@@ -114,7 +114,7 @@ def run_prompt(prompt):
 
 
 pre_prompts = [
-    "Help me plan the synthetic route for Ibuprofen",
+    "Help me plan the synthetic route for Ibuprofen (SMILES: CC(C)Cc1ccc(cc1)[C@@H](C)C(=O)O)",
     (
         "The enzyme that can catalyze the enzyme-catalyzed reaction "
         "(SMILES: O=C(O)C(=O)CO.O=C[C@H](O)CO>>O=C(CO)[C@@H](O)[C@H](O)CO) belongs "

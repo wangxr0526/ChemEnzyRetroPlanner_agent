@@ -49,14 +49,14 @@ class RetroPlanner(BaseTool):
     llm: BaseChatModel = None
     options: dict = {
         "organic":{
-            "iterationNumber": 100,
+            "iterationNumber": 50,
             "selectedModels": ["Reaxys"],
             "selectedStocks": ["eMolecules"],                # default
             # "selectedStocks": ["BioNav stock (benchmark)"],    # benchmark
             "selectedConditionPredictor": "Reaction Condition Recommander"       
         },
         "hybrid":{
-            "iterationNumber": 100,
+            "iterationNumber": 50,
             "selectedModels": ["Reaxys", "BKMS Metabolic"],
             "selectedStocks": ["eMolecules"],                # default
             # "selectedStocks": ["BioNav stock (benchmark)"],    # benchmark

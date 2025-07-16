@@ -18,6 +18,8 @@ streamlit run app.py
 ## Interface
 ![interface](streamlit_app/assets/interface.png)
 
+## Demo Video
+https://github.com/user-attachments/assets/5db4e35c-e95a-4c05-bbd8-99378c20f2c6
 
 
 ## Related repository
