@@ -135,4 +135,7 @@ query/
 tests/test_prices.py
 tests/test_easifa.py
 tests/test.py
+!tests/test_enzymatic.ipynb
+!tests/test_synthesis_planning.ipynb
+!tests/test_synthesis_planning_hybrid.ipynb
 note/*
